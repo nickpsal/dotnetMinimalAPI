@@ -35,7 +35,7 @@ namespace MinimalAPI
 
             var info = new OpenApiInfo()
             {
-                Version = "V1.0",
+                Version = "V1.2",
                 Title = "Minimal Api with Jwt Auth",
                 Description = "Minimal Api with Jwt Auth",
                 Contact = contactInfo,

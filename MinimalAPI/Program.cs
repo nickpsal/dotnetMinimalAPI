@@ -1,5 +1,6 @@
 
 global using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -8,7 +9,8 @@ using MinimalAPI.Models.Domain;
 using MinimalAPI.Models.Dtos;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authorization.Infrastructure;
 
 namespace MinimalAPI
 {
@@ -67,6 +69,12 @@ namespace MinimalAPI
                 }
             };
             //End Security Settings
+
+            // Define the "Admin" authorization policy
+            var adminPolicy = new AuthorizationPolicyBuilder()
+                .RequireAuthenticatedUser()
+                .RequireRole("Admin")
+                .Build();
 
             // Add services to the container.
             builder.Services.AddAuthorization();
@@ -130,6 +138,7 @@ namespace MinimalAPI
                 {
                     Email = user.Email,
                     Username = user.Username,
+                    Role = "User",
                     Password = hashedPassword
                 };
                 context.Users.Add(NewUser);
@@ -161,7 +170,8 @@ namespace MinimalAPI
                             new Claim("Id", userCredentials.Id.ToString()),
                             new Claim(JwtRegisteredClaimNames.Sub, user.Email),
                             new Claim(JwtRegisteredClaimNames.Email, user.Email),
-                            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+                            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                            new Claim(ClaimTypes.Role, userCredentials.Role)
                         }),
                         Expires = DateTime.Now.AddMinutes(5),
                         Audience = Audience,
@@ -187,9 +197,9 @@ namespace MinimalAPI
                 context.Books.Add(newBook);
                 await context.SaveChangesAsync();
                 Results.Ok(await context.Books.ToListAsync());
-            }).RequireAuthorization();
+            }).RequireAuthorization(adminPolicy);
 
-            app.MapPut("/book/{id}", async (DataContext context, int id, Book updatedBook) =>
+            app.MapPut("/book/update/{id}", async (DataContext context, int id, Book updatedBook) =>
             {
                 var foundBook = await context.Books.FindAsync(id);
                 if (foundBook is null)
@@ -200,7 +210,7 @@ namespace MinimalAPI
                 foundBook.Author = updatedBook.Author;
                 await context.SaveChangesAsync();
                 return Results.Ok(await context.Books.ToListAsync());
-            }).RequireAuthorization();
+            }).RequireAuthorization("Admin");
 
             app.MapDelete("/book/delete/{id}", async (DataContext context, int id) =>
             {
@@ -212,7 +222,7 @@ namespace MinimalAPI
                 context.Books.Remove(foundBook);
                 await context.SaveChangesAsync();
                 return Results.Ok(await context.Books.ToListAsync());
-            }).RequireAuthorization();
+            }).RequireAuthorization("Admin");
 
             app.Run();
         }

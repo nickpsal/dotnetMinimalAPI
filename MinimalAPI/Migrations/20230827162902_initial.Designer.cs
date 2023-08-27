@@ -11,7 +11,7 @@ using MinimalAPI.Data;
 namespace MinimalAPI.Migrations
 {
     [DbContext(typeof(DataContext))]
-    [Migration("20230827135104_initial")]
+    [Migration("20230827162902_initial")]
     partial class initial
     {
         /// <inheritdoc />
@@ -58,6 +58,10 @@ namespace MinimalAPI.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Password")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Role")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 

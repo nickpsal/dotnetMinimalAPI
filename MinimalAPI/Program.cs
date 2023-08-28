@@ -138,7 +138,6 @@ namespace MinimalAPI
                 {
                     Email = user.Email,
                     Username = user.Username,
-                    Role = "User",
                     Password = hashedPassword
                 };
                 context.Users.Add(NewUser);
